@@ -9,7 +9,10 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"math"
+	"net/http"
 )
 
 const (
@@ -24,9 +27,22 @@ const (
 var sin30, cos30 = math.Sin(angle), math.Cos(angle) // sin(30°), cos(30°)
 
 func main() {
-	fmt.Printf("<svg xmlns='http://www.w3.org/2000/svg' "+
-		"style='stroke: grey; fill: white; stroke-width: 0.7' "+
-		"width='%d' height='%d'>", width, height)
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/svg+xml")
+		color := "grey"
+		if r.URL.Query().Has("color") {
+			color = r.URL.Query().Get("color")
+		}
+		graph(w, color)
+	}
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+}
+
+func graph(out io.Writer, color string) {
+	fmt.Fprintf(out, "<svg xmlns='http://www.w3.org/2000/svg' "+
+		"style='stroke: %s; fill: white; stroke-width: 0.7' "+
+		"width='%d' height='%d'>\n", color, width, height)
 	for i := 0; i < cells; i++ {
 		for j := 0; j < cells; j++ {
 			ax, ay, err := corner(i+1, j)
@@ -34,12 +50,12 @@ func main() {
 			cx, cy, err := corner(i, j+1)
 			dx, dy, err := corner(i+1, j+1)
 			if !err {
-				fmt.Printf("<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
+				fmt.Fprintf(out, "<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
 					ax, ay, bx, by, cx, cy, dx, dy)
 			}
 		}
 	}
-	fmt.Println("</svg>")
+	fmt.Fprintln(out, "</svg>")
 }
 
 func corner(i, j int) (float64, float64, bool) {
@@ -57,17 +73,7 @@ func corner(i, j int) (float64, float64, bool) {
 }
 
 func f(x, y float64) float64 {
-	// splash
-	//r := math.Hypot(x, y) // distance from (0,0)
-
-	// copysign
-	//r := math.Copysign(x, y)
-
-	// dim
-	//r := math.Dim(x, y)
-
-	// Remainder
-	r := math.Remainder(x, y)
+	r := math.Hypot(x, y)
 
 	return math.Sin(r) / r
 }
