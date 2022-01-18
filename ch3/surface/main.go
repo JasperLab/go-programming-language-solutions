@@ -28,7 +28,6 @@ var sin30, cos30 = math.Sin(angle), math.Cos(angle) // sin(30°), cos(30°)
 
 func main() {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/svg+xml")
 		color := "grey"
 		if r.URL.Query().Has("color") {
 			color = r.URL.Query().Get("color")
@@ -40,9 +39,10 @@ func main() {
 }
 
 func graph(out io.Writer, color string) {
-	fmt.Fprintf(out, "<svg xmlns='http://www.w3.org/2000/svg' "+
-		"style='stroke: %s; fill: white; stroke-width: 0.7' "+
-		"width='%d' height='%d'>\n", color, width, height)
+	out.
+	fmt.Printf("<svg xmlns='http://www.w3.org/2000/svg' "+
+		"style='stroke: grey; fill: red; stroke-width: 0.7' "+
+		"width='%d' height='%d'>", width, height)
 	for i := 0; i < cells; i++ {
 		for j := 0; j < cells; j++ {
 			ax, ay, err := corner(i+1, j)
@@ -50,12 +50,11 @@ func graph(out io.Writer, color string) {
 			cx, cy, err := corner(i, j+1)
 			dx, dy, err := corner(i+1, j+1)
 			if !err {
-				fmt.Fprintf(out, "<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
+				fmt.Printf("<polygon points='%g,%g %g,%g %g,%g %g,%g'/>",
 					ax, ay, bx, by, cx, cy, dx, dy)
 			}
 		}
 	}
-	fmt.Fprintln(out, "</svg>")
 }
 
 func corner(i, j int) (float64, float64, bool) {
