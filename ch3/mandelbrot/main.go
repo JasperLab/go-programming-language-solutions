@@ -39,14 +39,24 @@ func mandelbrot(z complex128) color.Color {
 	const contrast = 15
 
 	var v complex128
-	for n := uint8(0); n < iterations; n++ {
-		v = v*v + z
-		if cmplx.Abs(v) > 2 {
-			//return color.Gray{255 - contrast*n}
-			return color.RGBA{255 - contrast*n, contrast*n, 255 - contrast*n, 255 - contrast * n}
+
+	var vals = [...]complex128{z - 1, z - 1i, z, z + 1, z + 1i}
+	var r,b,g,a uint8
+	for _, c := range(vals) {
+		for n := uint8(0); n < iterations; n++ {
+			v = v*v + c 
+			if cmplx.Abs(v) > 2 {
+				r += contrast*n/uint8(len(vals))
+				b += (255 - contrast*n) / uint8(len(vals))
+				g += contrast*n/uint8(len(vals))
+				a += (255 - contrast*n) / uint8(len(vals))
+				break
+			}
 		}
+		b += 255 / uint8(len(vals))
+		a += 255 / uint8(len(vals))
 	}
-	return color.RGBA{0, 255, 0, 255}
+	return color.RGBA{r, b, g, a}
 }
 
 //!-
