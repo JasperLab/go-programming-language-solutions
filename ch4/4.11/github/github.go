@@ -10,8 +10,9 @@ package github
 
 import "time"
 
-const IssuesURL = "https://api.github.com/search/issues"
+const SearchURL = "https://api.github.com/search/issues"
 const IssueURL = "https://api.github.com/repos/%s/%s/issues/%s"
+const IssuesURL = "https://api.github.com/repos/%s/%s/issues"
 
 type IssuesSearchResult struct {
 	TotalCount int `json:"total_count"`
@@ -21,11 +22,11 @@ type IssuesSearchResult struct {
 type Issue struct {
 	Number    int
 	HTMLURL   string `json:"html_url"`
-	Title     string
-	State     string
+	Title     string `json:"title"`
+	State     string `json:"state,omitempty"`
 	User      *User
 	CreatedAt time.Time `json:"created_at"`
-	Body      string    // in Markdown format
+	Body      string    `json:"body,omitempty"`
 }
 
 type User struct {

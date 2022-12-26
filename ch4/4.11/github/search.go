@@ -16,7 +16,7 @@ import (
 // SearchIssues queries the GitHub issue tracker.
 func SearchIssues(terms []string) (*IssuesSearchResult, error) {
 	q := url.QueryEscape(strings.Join(terms, " "))
-	resp, err := http.Get(IssuesURL + "?q=" + q)
+	resp, err := http.Get(SearchURL + "?q=" + q)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func SearchIssues(terms []string) (*IssuesSearchResult, error) {
 	// variant below which adds an HTTP request header indicating
 	// that only version 3 of the GitHub API is acceptable.
 	//
-	//   req, err := http.NewRequest("GET", IssuesURL+"?q="+q, nil)
+	//   req, err := http.NewRequest("GET", SearchURL+"?q="+q, nil)
 	//   if err != nil {
 	//       return nil, err
 	//   }
@@ -41,13 +41,13 @@ func SearchIssues(terms []string) (*IssuesSearchResult, error) {
 		return nil, fmt.Errorf("search query failed: %s", resp.Status)
 	}
 
-	var result IssuesSearchResult
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	result := &IssuesSearchResult{}
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		resp.Body.Close()
 		return nil, err
 	}
 	resp.Body.Close()
-	return &result, nil
+	return result, nil
 }
 
 //!-
