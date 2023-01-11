@@ -2,34 +2,30 @@ package main
 
 import (
 	"fmt"
-	"gopl/ch4/4.11/github"
-	"log"
 	"os"
 )
 
 func main() {
-	if len(os.Args[1:]) != 3 {
+	if len(os.Args[1:]) < 1 {
 		printUsage()
 	}
 
-	issue, err := github.GetIssue(os.Args[1], os.Args[2], os.Args[3])
-	if err != nil {
-		log.Fatal(err)
+	title := os.Args[1]
+
+	var assignees string[]
+	if len(os.Args[1:]) > 1 {
+		assignees = strings.Split(args[2])
 	}
 
-	issue.State = "closed"
-	issue, err = github.UpdateIssue(issue)
-	if err != nil {
-		log.Fatal(err)
+	var labels  string[]
+	if len(os.Args[1:] > 2) {
+		labels = strings.Split(args[3])
 	}
 
-	fmt.Printf("#%-5d %9.9s %.55s\n", issue.Number, issue.User.Login, issue.Title)
-	fmt.Println("=====================")
-	fmt.Println(issue.Body)
-
+		
 }
 
 func printUsage() {
-	fmt.Println("Usage:\n\t <owner> <repo> <description>")
+	fmt.Println("Usage:\n\t go create/create.go --title='title' [--assignee=name1[,name2,...] --labels[=label1[,label2,...]]]")
 	os.Exit(1)
 }

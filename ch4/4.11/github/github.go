@@ -20,18 +20,32 @@ type IssuesSearchResult struct {
 }
 
 type Issue struct {
-	Number    int
+	Number    int    `json:"id,omitempty"`
 	HTMLURL   string `json:"html_url"`
 	Title     string `json:"title"`
 	State     string `json:"state,omitempty"`
 	User      *User
-	CreatedAt time.Time `json:"created_at"`
-	Body      string    `json:"body,omitempty"`
+	CreatedAt time.Time   `json:"created_at"`
+	Body      string      `json:"body,omitempty"`
+	Assignees []*Assignee `json:"assignees,omitempty"`
+	Labels    []*Label    `json:"labels,omitempty"`
 }
 
 type User struct {
 	Login   string
-	HTMLURL string `json:"html_url"`
+	HTMLURL string `json:"html_url,omitempty"`
+}
+
+type Label struct {
+	Id          int    `json:"id,omitempty"`
+	Url         string `json:"url,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:description,omitempty"`
+}
+
+type Assignee struct {
+	Login string `json:"login"`
+	Id    int    `json:id,omitempty"`
 }
 
 //!-

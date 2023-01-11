@@ -3,10 +3,22 @@ package github
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
+
+var githubToken string
+
+func init() {
+	githubToken = os.Getenv("GITHUB_TOKEN")
+	if len(githubToken) == 0 {
+		log.Fatal("$GITHUB_TOKEN not set")
+	}
+}
 
 func GetIssue(owner string, repo string, issue_id string) (*Issue, error) {
 	url := fmt.Sprintf(IssueURL, owner, repo, issue_id)
@@ -30,20 +42,32 @@ func GetIssue(owner string, repo string, issue_id string) (*Issue, error) {
 	return &result, nil
 }
 
-func UpdateIssue(issue *Issue, owner string, token string, repo string) (*Issue, error) {
+func CreateIssue(owner string, repo string, issue *Issue) (*Issue, error) {
+	url := fmt.Sprintf(IssuesURL, owner, repo)
+	return upsertIssue(issue, owner, repo, url, http.MethodPost)
+}
+
+func UpdateIssue(issue *Issue, owner string, repo string) (*Issue, error) {
+	if issue.Number < 1 {
+		return nil, errors.New("Invalid issue number")
+	}
+	issue_id := strconv.Itoa(issue.Number)
+	url := fmt.Sprintf(IssueURL, owner, repo, issue_id)
+	return upsertIssue(issue, owner, repo, url, http.MethodPut)
+}
+
+func upsertIssue(issue *Issue, owner string, repo string, url string, httpMethod string) (*Issue, error) {
 	payload, err := json.Marshal(issue)
 	if err != nil {
 		return nil, err
 	}
 
-	issue_id := strconv.Itoa(issue.Number)
-	url := fmt.Sprintf(IssueURL, owner, repo, issue_id)
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequest(httpMethod, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Authorization", "Bearer "+githubToken)
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 
 	client := &http.Client{}
@@ -53,9 +77,9 @@ func UpdateIssue(issue *Issue, owner string, token string, repo string) (*Issue,
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		resp.Body.Close()
-		return nil, fmt.Errorf("Update issue call failed: %s", resp.Status)
+		return nil, fmt.Errorf("Create/Update issue call failed: %s", resp.Status)
 	}
 
 	var result Issue
@@ -65,8 +89,4 @@ func UpdateIssue(issue *Issue, owner string, token string, repo string) (*Issue,
 	}
 
 	return &result, nil
-}
-
-func CreateIssue(owner string, repo string, description string) (*Issue, error) {
-	return nil, nil
 }

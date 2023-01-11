@@ -12,14 +12,14 @@ func main() {
 		printUsage()
 	}
 
-	owner, token, repo, issue_id := os.Args[1], os.Getenv("GITHUB_TOKEN"), os.Args[2], os.Args[3]
+	owner, repo, issue_id := os.Args[1], os.Args[2], os.Args[3]
 	issue, err := github.GetIssue(owner, repo, issue_id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	issue.State = "closed"
-	issue, err = github.UpdateIssue(issue, owner, token, repo)
+	issue, err = github.UpdateIssue(issue, owner, repo)
 	if err != nil {
 		log.Fatal(err)
 	}
