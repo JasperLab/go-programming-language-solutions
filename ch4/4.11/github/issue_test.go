@@ -3,30 +3,52 @@ package github
 import "testing"
 
 func TestCreate(t *testing.T) {
-	label1 := &Label{Name: "Test1"}
-	label2 := &Label{Name: "Test2"}
-	labels := [2]*Label{label1, label2}
-	user := &User{
-		Login: "JasperLab",
-	}
+	createIssue(t)
+}
+
+func TestUpdate(t *testing.T) {
+}
+
+func TestClose(t *testing.T) {
+
+}
+
+func TestDelete(t *testing.T) {
+}
+
+func createIssue(t *testing.T) *Issue {
 	i := &Issue{
-		Title:  "Test",
-		Body:   "Test",
-		Labels: labels[:],
-		User:   user,
+		Title: "test",
+		Body:  "body",
 	}
 
-	i, err := CreateIssue("JasperLab", "go-programming-language-solutions", i)
+	labels := [...]string{"label1", "label2"}
+	for _, l := range labels {
+		i.Labels = append(i.Labels, &Label{Name: l})
+	}
+
+	i.User = &User{
+		Login: "JasperLab",
+	}
+
+	issue, err := CreateIssue("JasperLab", "go-programming-language-solutions", i)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if i.Title != "Test" {
+	if issue.Title != "test" {
 		t.Error("test title != 'Test'")
 	}
-	if i.Body != "Test" {
+	if issue.Body != "body" {
 		t.Error("test body != 'Test'")
 	}
-	if len(i.Labels) != 2 || i.Labels[0].Name != "Test1" || i.Labels[1].Name != "Test2" {
-		t.Error("test labels != ['Test1', 'Test2']")
+	for i, l := range labels {
+		if issue.Labels[i] == nil || issue.Labels[i].Name != l {
+			t.Errorf("test label %d != %s", i, l)
+		}
 	}
+
+	return i
+}
+
+func deleteIssue(t *testing.T) {
 }
