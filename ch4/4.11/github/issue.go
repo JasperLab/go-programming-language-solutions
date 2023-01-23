@@ -53,7 +53,7 @@ func UpdateIssue(issue *Issue, owner string, repo string) (*Issue, error) {
 	}
 	issue_id := strconv.Itoa(issue.Number)
 	url := fmt.Sprintf(IssueURL, owner, repo, issue_id)
-	return upsertIssue(issue, owner, repo, url, http.MethodPut)
+	return upsertIssue(issue, owner, repo, url, http.MethodPatch)
 }
 
 func upsertIssue(issue *Issue, owner string, repo string, url string, httpMethod string) (*Issue, error) {

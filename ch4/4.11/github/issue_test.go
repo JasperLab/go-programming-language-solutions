@@ -7,13 +7,37 @@ func TestCreate(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	issue := createIssue(t)
+
+	issue.Body = "update"
+	issue.Labels = append(issue.Labels, &Label{Name: "update"})
+	var labels []string
+	for _, l := range issue.Labels {
+		labels = append(labels, l.Name)
+	}
+
+	issue, err := UpdateIssue(issue, "JasperLab", "go-programming-language-solutions")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if issue.Body != "update" {
+		t.Error("updated issue body != 'update'")
+	}
+	for i, l := range labels {
+		if issue.Labels[i] == nil || issue.Labels[i].Name != l {
+			t.Errorf("label %d != '%s'", i, l)
+		}
+	}
+
+	issue.State = "closed"
+	issue, err = UpdateIssue(issue, "JasperLab", "go-programming-language-solutions")
+	if err != nil {
+		t.Error("Failed to close the test issue due to " + err.Error())
+	}
 }
 
 func TestClose(t *testing.T) {
-
-}
-
-func TestDelete(t *testing.T) {
 }
 
 func createIssue(t *testing.T) *Issue {
@@ -47,7 +71,7 @@ func createIssue(t *testing.T) *Issue {
 		}
 	}
 
-	return i
+	return issue
 }
 
 func deleteIssue(t *testing.T) {

@@ -20,7 +20,7 @@ type IssuesSearchResult struct {
 }
 
 type Issue struct {
-	Number    int    `json:"id,omitempty"`
+	Number    int    `json:"number,omitempty"`
 	HTMLURL   string `json:"html_url"`
 	Title     string `json:"title"`
 	State     string `json:"state,omitempty"`
