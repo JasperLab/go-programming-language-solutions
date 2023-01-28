@@ -16,7 +16,7 @@ func TestUpdate(t *testing.T) {
 		labels = append(labels, l.Name)
 	}
 
-	issue, err := UpdateIssue(issue, "JasperLab", "go-programming-language-solutions")
+	issue, err := UpdateIssue("JasperLab", "go-programming-language-solutions", issue)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	issue.State = "closed"
-	issue, err = UpdateIssue(issue, "JasperLab", "go-programming-language-solutions")
+	issue, err = UpdateIssue("JasperLab", "go-programming-language-solutions", issue)
 	if err != nil {
 		t.Error("Failed to close the test issue due to " + err.Error())
 	}
@@ -72,7 +72,4 @@ func createIssue(t *testing.T) *Issue {
 	}
 
 	return issue
-}
-
-func deleteIssue(t *testing.T) {
 }

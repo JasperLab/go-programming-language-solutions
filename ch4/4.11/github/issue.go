@@ -47,7 +47,7 @@ func CreateIssue(owner string, repo string, issue *Issue) (*Issue, error) {
 	return upsertIssue(issue, owner, repo, url, http.MethodPost)
 }
 
-func UpdateIssue(issue *Issue, owner string, repo string) (*Issue, error) {
+func UpdateIssue(owner string, repo string, issue *Issue) (*Issue, error) {
 	if issue.Number < 1 {
 		return nil, errors.New("Invalid issue number")
 	}
