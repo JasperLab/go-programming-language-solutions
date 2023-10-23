@@ -25,3 +25,13 @@ func TestUpdateId(t *testing.T) {
 		t.Errorf("Expected: %d, read: %d", nextId, lastId)
 	}
 }
+
+func TestGetRecord(t *testing.T) {
+	record, err := getRecord(1)
+	if err != nil {
+		t.Error(err)
+	}
+	if record.Num != 1 {
+		t.Errorf("Record ID: expected 1, got %d", record.Num)
+	}
+}
