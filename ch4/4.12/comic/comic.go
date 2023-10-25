@@ -2,83 +2,99 @@ package comic
 
 import (
     "bufio"
-	"encoding/json"
-	"fmt"
-	"net/http"
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
     "os"
-    "strconv"
 )
 
 const size = 1
-const idfile = "xkcd.id"
-const ontentfile = "xkcd.content"
+const contentfile = "/tmp/xkcd.content"
 const xkcdUrl = "https://xkcd.com/%d/info.0.json"
 
+var records = make(map[uint]*Record)
+var latestId uint
 
 func Refresh() (uint, error) {
-    // read last ID saved to contentfile from idfile
-    _, err := lastId()
+    return 0, nil
+}
+
+// loads database file into memory in its entirety
+// returns the total number of successfully loaded records
+func loadDatabase(filename string) (uint, error) {
+
+    data, err := os.ReadFile(filename)
     if err != nil {
-        return 0, err
+        if _, err = os.Create(filename); err != nil {
+            return 0, err
+        }
+        return 0, nil
     }
 
-    // incrementally download next comic record until not found (404)
-	return 0, nil
-}
+    r := bytes.NewReader(data)
+    s := bufio.NewScanner(r)
+    s.Split(bufio.ScanLines)
+    var currentLine string
+    sum := 0
+    for s.Scan() {
+        currentLine = s.Text()
+        var record Record
+        if err = json.Unmarshal([]byte(currentLine), &record); err != nil {
+            //ignore individual unparseable lines
+            continue
+        }
 
-func lastId() (uint, error) {
-    f, err := openFile(idfile)
-    if err != nil {
-        return 0, err
-    }
-    defer f.Close()
-
-    scanner := bufio.NewScanner(f)
-    text := "1"
-    if scanner.Scan() {
-        text = scanner.Text()
-    } else if scanner.Err() != nil {
-        // scanning ID error: we do not want tolerate any issues with the ID file
-        return 0, err
+        records[uint(record.Num)] = &record
+        sum += 1
     }
 
-    id, err := strconv.Atoi(text)
-    if err != nil || id <= 0 {
-        // we can tolerate invalid index
-        return 1, nil
-    }
-    return uint(id), nil
+    return uint(sum), nil
 }
 
-func updateId(id uint) error {
-    str := strconv.FormatUint(uint64(id), 10)
-    return os.WriteFile(idfile, []byte(str), 0)
-}
-
-func getRecord(id uint) (*Record, error) {
-	url := fmt.Sprintf(xkcdUrl, id)
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Record query failed: %s", resp.Status)
-	}
-
-	var result Record
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
-func openFile(name string) (*os.File, error) {
-    file, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0755)
+func fetchRecord(id uint, baseUrl string) (*Record, error) {
+    url := fmt.Sprintf(baseUrl, id)
+    resp, err := http.Get(url)
     if err != nil {
         return nil, err
     }
-    return file, nil
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return nil, fmt.Errorf("Record query failed: %s", resp.Status)
+    }
+
+    var result Record
+    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+        return nil, err
+    }
+
+    return &result, nil
+}
+
+func appendRecord(record *Record, filename string) error {
+    file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+
+    value, err := json.Marshal(record)
+    if err != nil {
+        return err
+    }
+
+    writer := bufio.NewWriter(file)
+    if _, err = writer.Write(value); err != nil {
+        return err
+    }
+    if _, err = writer.WriteString("\n"); err != nil {
+        return err
+    }
+
+    return writer.Flush()
+}
+
+func findRecord(num uint, filename string) (*Record, error) {
+    return nil, nil
 }
