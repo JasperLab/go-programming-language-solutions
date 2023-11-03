@@ -6,7 +6,12 @@ import (
 )
 
 func init() {
-	comic.Refresh()
+	log.Println("Loading xkcd records...")
+	len, err := comic.Refresh()
+	if err != nil {
+		log.Fatalf("Failed to load xkcd records: %v", err)
+	}
+	log.Printf("Loaded %d records", len)
 }
 
 func main() {

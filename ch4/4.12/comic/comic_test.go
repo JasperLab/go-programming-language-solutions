@@ -75,4 +75,31 @@ func TestLoadDatabase(t *testing.T) {
 	if string(e2) != string(a2) {
 		t.Errorf("%s\n\nexpected; received\n\n%s", e2, a2)
 	}
+
+	if len(records) != 2 {
+		t.Errorf("%d records expected in memory, found %d", 2, len(records))
+	}
+}
+
+func TestBackfillDatabase(t *testing.T) {
+	//prefill records so only first two are missing (should work for the next few years :))
+	const max_records = 100000
+	for i := uint(1); i <= max_records; i++ {
+		records[i] = new(Record)
+	}
+	records[uint(1)], records[uint(2)], records[uint(1000)] = nil, nil, nil
+
+	n, last := backfillDatabase(testFile)
+
+	if n != 3 {
+		t.Errorf("%d loaded records expected, got %d", 3, n)
+	}
+
+	if last != 1000 {
+		t.Errorf("%d last loaded expected, got %d", 1000, last)
+	}
+
+	if len(records) != max_records {
+		t.Errorf("%d records expected, got %d", max_records, len(records))
+	}
 }

@@ -16,8 +16,15 @@ const xkcdUrl = "https://xkcd.com/%d/info.0.json"
 var records = make(map[uint]*Record)
 var latestId uint
 
-func Refresh() (uint, error) {
-    return 0, nil
+func Refresh() (int, error) {
+    _, err := loadDatabase(contentfile)
+    if err != nil {
+        return 0, err
+    }
+
+    _, _ = backfillDatabase(contentfile)
+
+    return len(records), nil
 }
 
 // loads database file into memory in its entirety
@@ -52,6 +59,40 @@ func loadDatabase(filename string) (uint, error) {
     return uint(sum), nil
 }
 
+func backfillDatabase(filename string) (uint, uint) {
+    id := uint(1)
+    fetched := uint(0)
+    last := uint(0)
+
+    for {
+        if records[id] != nil {
+            id += 1
+            continue
+        }
+
+        r, err := fetchRecord(id, xkcdUrl)
+        if err != nil || r == nil {
+            if id == 404 {
+                //oddly the 404 record is missing, probably on purpose
+                id += 1
+                continue
+            }
+            break
+        }
+        err = appendRecord(r, contentfile)
+        if err != nil {
+            fmt.Printf("Error saving record: %v\n", err)
+            break
+        }
+        records[id] = r
+        last = id
+        id += 1
+        fetched += 1
+    }
+
+    return fetched, last
+}
+
 func fetchRecord(id uint, baseUrl string) (*Record, error) {
     url := fmt.Sprintf(baseUrl, id)
     resp, err := http.Get(url)
@@ -60,6 +101,8 @@ func fetchRecord(id uint, baseUrl string) (*Record, error) {
     }
     defer resp.Body.Close()
 
+    // naive error handling
+    // can be improved to handle throttling/exp back-off retries
     if resp.StatusCode != http.StatusOK {
         return nil, fmt.Errorf("Record query failed: %s", resp.Status)
     }
