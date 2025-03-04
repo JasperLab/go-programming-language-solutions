@@ -1,92 +1,72 @@
 package main
 
 import (
+	"fmt"
 	"gopl/ch4/4.11/github"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 )
 
+var owner, repo string
+
 func main() {
+	if len(os.Args[1:]) != 2 {
+		printUsage()
+	}
+
+	owner, repo = os.Args[1], os.Args[2]
+
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
+func printUsage() {
+	fmt.Println("Usage:\n\tbrowser <owner> <repo>")
+	os.Exit(1)
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
-	issues, err := fetch()
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte("<html><body>"))
+
+	issues, err := github.GetIssues(owner, repo)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		w.Write([]byte(err.Error()))
 	}
-
-	users := uniqueUsers(issues)
-	milestones := uniqueMilestones(issues)
-
-	if err := render(w, issues, milestones, users); err != nil {
+	if err = renderIssues(w, issues); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
-
-func fetch() ([]*github.Issue, error) {
-	return github.ListIssues()
-}
-
-func uniqueUsers(issues []*github.Issue) (users []*github.User) {
-	u := make(map[int]*github.User)
-
-	for _, issue := range issues {
-		if issue.User != nil {
-			u[issue.User.Id] = issue.User
-		}
+		w.Write([]byte(err.Error()))
 	}
 
-	for _, user := range u {
-		users = append(users, user)
+	milestones, err := github.GetMilestones(owner, repo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+	if err = renderMilestones(w, milestones); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 	}
 
-	return
-}
-
-func uniqueMilestones(issues []*github.Issue) (milestones []*github.Milestone) {
-	m := make(map[int]*github.Milestone)
-
-	for _, issue := range issues {
-		if issue.Milestone != nil {
-			m[issue.Milestone.Id] = issue.Milestone
-		}
+	users, err := github.GetAssignees(owner, repo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+	if err = renderUsers(w, users); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 	}
 
-	for _, milestone := range m {
-		milestones = append(milestones, milestone)
-	}
-
-	return
-}
-
-func render(w http.ResponseWriter, issues []*github.Issue, milestones []*github.Milestone, users []*github.User) error {
-	w.Write([]byte("<html><body>"))
-	if err := renderIssues(w, issues); err != nil {
-		return err
-	}
-
-	w.Write([]byte("<br>"))
-
-	if err := renderMilestones(w, milestones); err != nil {
-		return err
-	}
-
-	w.Write([]byte("<br>"))
-
-	if err := renderUsers(w, users); err != nil {
-		return err
-	}
 	w.Write([]byte("</body></html>"))
-
-	return nil
 }
 
 func renderIssues(w http.ResponseWriter, issues []*github.Issue) error {
 	const isssueTemplate = `
+		<br>
 		<table>
 			<caption>Issues</caption>
 			{{range .}}
@@ -105,6 +85,7 @@ func renderIssues(w http.ResponseWriter, issues []*github.Issue) error {
 
 func renderMilestones(w http.ResponseWriter, milestones []*github.Milestone) error {
 	const milestoneTemplate = `
+		<br>
 		<table>
 			<caption>Milestones</caption>
 			{{range .}}
@@ -123,6 +104,7 @@ func renderMilestones(w http.ResponseWriter, milestones []*github.Milestone) err
 
 func renderUsers(w http.ResponseWriter, users []*github.User) error {
 	const userTemplate = `
+		<br>
 		<table>
 			<caption>Users</caption>
 			{{range .}}

@@ -20,6 +20,72 @@ func init() {
 	}
 }
 
+func GetIssues(owner string, repo string) ([]*Issue, error) {
+	url := fmt.Sprintf(IssuesURL, owner, repo)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("Issues query failed: %s", resp.Status)
+	}
+
+	var result []*Issue
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func GetMilestones(owner string, repo string) ([]*Milestone, error) {
+	url := fmt.Sprintf(MilestonesURL, owner, repo)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("Milestones query failed: %s", resp.Status)
+	}
+
+	var result []*Milestone
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func GetAssignees(owner string, repo string) ([]*User, error) {
+	url := fmt.Sprintf(AssigneesURL, owner, repo)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("Assignees query failed: %s", resp.Status)
+	}
+
+	var result []*User
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func GetIssue(owner string, repo string, issue_id string) (*Issue, error) {
 	url := fmt.Sprintf(IssueURL, owner, repo, issue_id)
 	resp, err := http.Get(url)

@@ -13,6 +13,8 @@ import "time"
 const SearchURL = "https://api.github.com/search/issues"
 const IssueURL = "https://api.github.com/repos/%s/%s/issues/%s"
 const IssuesURL = "https://api.github.com/repos/%s/%s/issues"
+const AssigneesURL = "https://api.github.com/repos/%s/%s/assignees"
+const MilestonesURL = "https://api.github.com/repos/%s/%s/milestones"
 
 type IssuesSearchResult struct {
 	TotalCount int `json:"total_count"`
@@ -25,13 +27,15 @@ type Issue struct {
 	Title     string `json:"title"`
 	State     string `json:"state,omitempty"`
 	User      *User
-	CreatedAt time.Time   `json:"created_at"`
-	Body      string      `json:"body,omitempty"`
-	Assignees []*Assignee `json:"assignees,omitempty"`
-	Labels    []*Label    `json:"labels,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	Body      string     `json:"body,omitempty"`
+	Assignees []*User    `json:"assignees,omitempty"`
+	Labels    []*Label   `json:"labels,omitempty"`
+	Milestone *Milestone `json:"milestone,omitempty"`
 }
 
 type User struct {
+	Id      int `json:"id,omitempty"`
 	Login   string
 	HTMLURL string `json:"html_url,omitempty"`
 }
@@ -43,9 +47,10 @@ type Label struct {
 	Description string `json:description,omitempty"`
 }
 
-type Assignee struct {
-	Login string `json:"login"`
-	Id    int    `json:id,omitempty"`
+type Milestone struct {
+	Id      int    `json:"id,omitempty"`
+	HTMLURL string `json:"html_url,omitempty"`
+	Title   string `json:"title"`
 }
 
 //!-
